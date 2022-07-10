@@ -16,12 +16,8 @@ const obj = new Proxy(data, {
   set(target, key, newVal) {
     // 设置属性值
     target[key] = newVal
-    // 根据target从桶中取得depsMap, 它也是一个 Map 类型：key --> effects
-    const depsMap = bucket.get(target)
-    if(!depsMap) return 
-    // 根据key取得所有副作用函数effects
-    const effects = depsMap.get(key)
-    effects && effects.forEach(fn => fn())
+    // 把副作用从桶里取出来并执行
+    trigger(target, key)
   }
 })
 
@@ -42,4 +38,13 @@ function track(target, key) {
   // 最后将当前激活的副作用函数添加到桶里
   deps.add(activeEffect)
 
+}
+
+function trigger(target, key) {
+  // 根据target从桶中取得depsMap, 它也是一个 Map 类型：key --> effects
+  const depsMap = bucket.get(target)
+  if(!depsMap) return 
+  // 根据key取得所有副作用函数effects
+  const effects = depsMap.get(key)
+  effects && effects.forEach(fn => fn())
 }
