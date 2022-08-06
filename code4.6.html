@@ -82,8 +82,14 @@
     // 根据key取得所有副作用函数effects
     const effects = depsMap.get(key)
     // 执行
-    const effectToRun = new Set(effects) // 新增
-    effectToRun.forEach(effectFn => effectFn()) //新增
+    const effectToRun = new Set()
+    effects && effects.forEach(effectFn => {
+      // 如果trigger 触发执行的副作用函数与当前正在执行的副作用函数相同，则不触发执行
+      if (activeEffect !== effectFn) {
+        effectToRun.add(effectFn)
+      }
+    })
+    effectToRun.forEach(effectFn => effectFn())
     // effects && effects.forEach(fn => fn());
   }
   setTimeout(() => {
