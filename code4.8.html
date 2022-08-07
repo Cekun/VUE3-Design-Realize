@@ -102,7 +102,14 @@
     // dirty 标志为脏数据，需要重新计算
     let value, dirty = true
     // 把getter作为副作用函数，创建一个lazy的Effect
-    const effectFn = effetc(getter, { lazy: true, scheduler() { dirty = true } })
+    const effectFn = effetc(getter, {
+      lazy: true,
+      scheduler() {
+        dirty = true
+        // 当计算属性依赖的响应式数据发生数据变化时，手动调用trigger函数触发响应
+        trigger(obj, 'value')
+      }
+    })
 
     const obj = {
       get value() {
@@ -111,6 +118,8 @@
           value = effectFn()
           dirty = false
         }
+        // 当读取value时， 手动调用track函数进行追踪
+        track(obj, 'value')
         return value
       }
     }
@@ -118,8 +127,14 @@
   }
 
   const sum = computed(() => obj.foo + obj.bar, { lazy: true })
-  console.log(sum.value);
-  console.log(sum.value);
+  console.log(sum.value); // 3
+  console.log(sum.value); // 3
   obj.foo++
-  console.log(sum.value);
+  console.log(sum.value); //4
+
+  console.log('%c 分割线', 'color: green');
+  effetc(() => {
+    console.log('嵌套', sum.value);
+  })
+  obj.foo++
 </script>
