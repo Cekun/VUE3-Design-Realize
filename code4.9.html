@@ -128,8 +128,14 @@
 
   // source: 响应式数据， cb回调函数
   function watch(source, cb) {
+    let getter
+    if (typeof source === "function") {
+      getter = source
+    } else {
+      getter = () => traverse(source)
+    }
     effetc(
-      () => traverse(source),
+      () => getter(),
       {
         scheduler() {
           cb()
@@ -151,6 +157,15 @@
     return value
   }
 
+  // way one
   watch(obj, () => console.log('data changed'))
   obj.foo++
+
+  // way two
+  watch(
+    // getter 函数
+    () => obj.bar,
+    () => console.log('obj.bar changed')
+  )
+  obj.bar++
 </script>
