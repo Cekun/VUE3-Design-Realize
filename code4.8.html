@@ -1,0 +1,96 @@
+<body></body>
+<script>
+  const bucket = new WeakMap()
+
+  const data = { foo: 1 }
+  const obj = new Proxy(data, {
+    get(target, key) {
+      // 将副作用函数activeEffect 添加到存储副作用函数的桶中
+      track(target, key)
+      return target[key]
+    },
+    set(target, key, newVal) {
+      target[key] = newVal
+      // 把副作用函数从桶里取出并执行
+      trigger(target, key)
+    }
+  })
+
+  // 用一个全局变量存储被注册的副作用函数
+  let activeEffect
+  // effect 栈
+  const effectStack = []
+
+  // effect 函数用于注册副作用函数
+  function effetc(fn, options = {}) {
+    const effectFn = () => {
+      // 调用cleanup完成清楚工作
+      cleanup(effectFn)
+      // effectFn执行时，将其设置为当前激活的副作用函数
+      activeEffect = effectFn
+      // 在调用副作用函数之前将当前副作用函数压入栈中
+      effectStack.push(effectFn)
+      fn()
+      // 在当前副作用函数执行完毕后，将当前副作用函数弹出，并把activeEffect还原为之前的值
+      effectStack.pop()
+      activeEffect = effectStack[effectStack.length - 1]
+    }
+    effectFn.options = options
+    // activeEffect 用来存储所有与该副作用函数相关联的依赖集合
+    effectFn.deps = []
+    effectFn()
+  }
+
+  function cleanup(effectFn) {
+    for (let i = 0; i < effectFn.deps.length; i++) {
+      // deps是依赖集合
+      const deps = effectFn.deps[i];
+      // 将effectFn从依赖集合中移除
+      deps.delete(effectFn)
+    }
+    // 最后需要重置effectFn.deps数组
+    effectFn.deps.length = 0
+  }
+
+  function track(target, key) {
+    if (!activeEffect) return
+    // 根据target从桶中取得depsMap, 它是一个map类型： key --> effects
+    let depsMap = bucket.get(target)
+
+    if (!depsMap) {
+      bucket.set(target, (depsMap = new Map()))
+    }
+    // 再根据key从depsMap中取得deps,它是一个Set类型，
+    // 里面存储着所有与当前key相关联的副作用函数：effects
+    let deps = depsMap.get(key)
+    if (!deps)
+      depsMap.set(key, (deps = new Set()))
+    // 把当前激活的副总用函数添加到依赖集合
+    deps.add(activeEffect)
+    // deps就是一个与当前副作用函数存在联系的依赖集合
+    // 将其添加到activeEffect.deps 数组中
+    activeEffect.deps.push(deps)
+  }
+
+  function trigger(target, key) {
+    const depsMap = bucket.get(target)
+    if (!depsMap) return
+    // 根据key取得所有副作用函数effects
+    const effects = depsMap.get(key)
+    // 执行
+    const effectToRun = new Set()
+    effects && effects.forEach(effectFn => {
+      // 如果trigger 触发执行的副作用函数与当前正在执行的副作用函数相同，则不触发执行
+      if (activeEffect !== effectFn) {
+        effectToRun.add(effectFn)
+      }
+    })
+    effectToRun.forEach(effectFn => {
+      if (effectFn.options.scheduler)
+        effectFn.options.scheduler(effectFn)
+      else
+        effectFn()
+    })
+  }
+
+</script>
