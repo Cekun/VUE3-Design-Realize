@@ -134,14 +134,21 @@
     } else {
       getter = () => traverse(source)
     }
-    effetc(
+    let oldValue, newValue
+    const effectFn = effetc(
       () => getter(),
       {
+        lazy: true,
         scheduler() {
-          cb()
+          newValue = effectFn()
+          // 在scheduler 中重新执行副作用函数，得到的是新值
+          cb(newValue, oldValue)
+          oldValue = newValue
         }
       }
     )
+    // 手动调用副作用函数得到的是新值
+    oldValue = effectFn()
   }
 
   function traverse(value, seen = new Set()) {
@@ -158,7 +165,7 @@
   }
 
   // way one
-  watch(obj, () => console.log('data changed'))
+  watch(obj, () => console.log('data changed: foo', obj.foo))
   obj.foo++
 
   // way two
@@ -168,4 +175,11 @@
     () => console.log('obj.bar changed')
   )
   obj.bar++
+
+  // 获取新旧值
+  watch(
+    () => obj.foo,
+    (newValue, oldValue) => console.log(newValue, oldValue)
+  )
+  obj.foo++
 </script>
