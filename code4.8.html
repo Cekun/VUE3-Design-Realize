@@ -98,20 +98,28 @@
   }
 
   function computed(getter) {
+    // value用来存储上一次计算的结果,
+    // dirty 标志为脏数据，需要重新计算
+    let value, dirty = true
     // 把getter作为副作用函数，创建一个lazy的Effect
-    const effectFn = effetc(getter, { lazy: true })
-
+    const effectFn = effetc(getter, { lazy: true, scheduler() { dirty = true } })
 
     const obj = {
       get value() {
-        // 当读取value值才执行effectFn
-        return effectFn()
+        if (dirty) {
+          // 当读取value值才执行effectFn
+          value = effectFn()
+          dirty = false
+        }
+        return value
       }
     }
     return obj
   }
 
-
   const sum = computed(() => obj.foo + obj.bar, { lazy: true })
+  console.log(sum.value);
+  console.log(sum.value);
+  obj.foo++
   console.log(sum.value);
 </script>
