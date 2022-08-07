@@ -2,7 +2,7 @@
 <script>
   const bucket = new WeakMap()
 
-  const data = { foo: 1 }
+  const data = { foo: 1, bar: 2 }
   const obj = new Proxy(data, {
     get(target, key) {
       // 将副作用函数activeEffect 添加到存储副作用函数的桶中
@@ -30,15 +30,19 @@
       activeEffect = effectFn
       // 在调用副作用函数之前将当前副作用函数压入栈中
       effectStack.push(effectFn)
-      fn()
+      const res = fn()
       // 在当前副作用函数执行完毕后，将当前副作用函数弹出，并把activeEffect还原为之前的值
       effectStack.pop()
       activeEffect = effectStack[effectStack.length - 1]
+      return res
     }
     effectFn.options = options
     // activeEffect 用来存储所有与该副作用函数相关联的依赖集合
     effectFn.deps = []
-    effectFn()
+    // 只有非lazy的时候才执行
+    if (!options.lazy)
+      effectFn()
+    return effectFn
   }
 
   function cleanup(effectFn) {
@@ -93,4 +97,21 @@
     })
   }
 
+  function computed(getter) {
+    // 把getter作为副作用函数，创建一个lazy的Effect
+    const effectFn = effetc(getter, { lazy: true })
+
+
+    const obj = {
+      get value() {
+        // 当读取value值才执行effectFn
+        return effectFn()
+      }
+    }
+    return obj
+  }
+
+
+  const sum = computed(() => obj.foo + obj.bar, { lazy: true })
+  console.log(sum.value);
 </script>
