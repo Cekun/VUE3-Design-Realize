@@ -53,7 +53,7 @@
   }
 
   function track(target, key) {
-    if (!activeEffect) return target[key]
+    if (!activeEffect) return
     // 根据target从桶中取得depsMap, 它是一个map类型： key --> effects
     let depsMap = bucket.get(target)
 
@@ -95,11 +95,46 @@
   }
 
 
+  // effetc(() => {
+  //   console.log(obj.foo);
+  // }, {
+  //   scheduler(fn) { setTimeout(fn) }
+  // })
+  // obj.foo++
+  // console.log('finish');
+
+
+
+  console.log('%c this is a -------', 'color:#0f0;')
+
+
+  // 定义一个任务队列
+  const jobQueue = new Set()
+  // 使用Promise.resolve() 创建一个promise实例，我们用它将一个任务添加到微任务队列
+  const p = Promise.resolve()
+
+  // 是否正在刷新队列
+  let isFlushing = false
+  function flushJob() {
+    // 队列在刷新，什么也不做
+    if (isFlushing) return
+    isFlushing = !0
+    // 在微任务队列中刷新jobQueue
+    p.then(() => {
+      jobQueue.forEach(job => job())
+    }).finally(() => {
+      isFlushing = !1
+    })
+  }
+
   effetc(() => {
-    console.log(obj.foo);
+    console.log('%c' + obj.foo, 'color: red');
   }, {
-    scheduler(fn) { setTimeout(fn) }
+    scheduler(fn) {
+      jobQueue.add(fn)
+      flushJob()
+    }
   })
   obj.foo++
-  console.log('finish');
+  obj.foo++
 </script>
