@@ -1,6 +1,6 @@
 <div id="app"></div>
 
-<script lang="ts">
+<script>
 
   function createRenderer(options) {
     const { createElement, insert, setElementText } = options
@@ -12,6 +12,14 @@
       else if (Array.isArray(vnode.children)) {
         // 子节点是数组
         vnode.children.forEach(child => patch(null, child, el))
+      }
+      if (vnode.props) {
+        for (const key in vnode.props) {
+          // 调用setAttribute将属性设置到元素上
+          el.setAttribute(key, vnode.props[key])
+          //// 或者直接设置
+          // el[key] = vnode.props[key]
+        }
       }
       insert(el, container)
     }
@@ -43,6 +51,9 @@
 
   const vnode = {
     type: 'div',
+    props: {
+      id: 'foo'
+    },
     children: [
       {
         type: 'p',
