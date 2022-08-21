@@ -65,7 +65,8 @@
       {
         type: 'button',
         props: {
-          id: 'btn'
+          id: 'btn',
+          class: 'btnCls'
         },
         children: 'hello'
       },
@@ -91,7 +92,10 @@
       parent.insertBefore(el, anchor)
     },
     patchProps(el, key, preValue, nextValue) {
-      if (shouldSetAsProps(el, key, nextValue)) {
+      if (key === 'class') {
+        // 对class进行特殊处理，className性能优于el.classList、el.setAttribute
+        el.className = nextValue || ''
+      } else if (shouldSetAsProps(el, key, nextValue)) {
         const type = typeof el[key]
         if (type === "boolean" && nextValue === '') {
           // 如果是布尔类型，并且value是空字符串，则将值矫正为true
