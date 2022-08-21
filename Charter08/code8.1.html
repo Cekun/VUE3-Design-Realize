@@ -11,7 +11,7 @@
         setElementText(el, vnode.children)
       else if (Array.isArray(vnode.children)) {
         // 子节点是数组
-        vnode.children.forEach(child => path(null, child, el))
+        vnode.children.forEach(child => patch(null, child, el))
       }
       insert(el, container)
     }
@@ -42,8 +42,13 @@
   }
 
   const vnode = {
-    type: 'h1',
-    children: 'hello'
+    type: 'div',
+    children: [
+      {
+        type: 'p',
+        children: 'hello'
+      }
+    ]
   }
 
   const renderer = createRenderer({
