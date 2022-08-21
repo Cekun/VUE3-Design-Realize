@@ -1,0 +1,63 @@
+<div id="app"></div>
+
+<script lang="ts">
+
+  function createRenderer(options) {
+    const { createElement, insert, setElementText } = options
+
+    function mountElement(vnode, container) {
+      const el = createElement(vnode.type)
+      if (typeof vnode.children === "string")
+        setElementText(el, vnode.children)
+      else if (Array.isArray(vnode.children)) {
+        // 子节点是数组
+        vnode.children.forEach(child => path(null, child, el))
+      }
+      insert(el, container)
+    }
+
+    function patch(n1, n2, container) {
+      if (!n1) {
+        mountElement(n2, container)
+      } else {
+
+      }
+    }
+
+    function render(vnode, container) {
+      if (vnode) {
+        // new vnode 存在， 将其与old vnode一起传递给patch 函数进行打补丁
+        patch(container._vnode, vnode, container)
+      } else {
+        if (container._vnode) {
+          // old vnode存在，且new vnode不存在，说明是写在（unmount）操作
+          container.innerHtml = ''
+        }
+      }
+      // 把vnode 存储到container._vnode 下，即后续渲染中的old vnode
+      container._vnode = vnode
+    }
+
+    return { render }
+  }
+
+  const vnode = {
+    type: 'h1',
+    children: 'hello'
+  }
+
+  const renderer = createRenderer({
+    createElement(tag) {
+      return document.createElement(tag)
+    },
+    setElementText(el, text) {
+      el.textContent = text
+    },
+    insert(el, parent, anchor = null) {
+      parent.insertBefore(el, anchor)
+    }
+  })
+
+  renderer.render(vnode, document.querySelector('#app'))
+
+</script>
