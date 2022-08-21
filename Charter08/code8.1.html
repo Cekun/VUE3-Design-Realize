@@ -2,8 +2,15 @@
 
 <script>
 
+  function shouldSetAsProps(el, key, value) {
+    // 特殊处理 el.form只读
+    if (key === 'form' && el.tagName === "INPUT") return false
+    // 兜底 ---- 用 in 操作符判断key是否存在对应的DOM Properties
+    return key in el
+  }
+
   function createRenderer(options) {
-    const { createElement, insert, setElementText } = options
+    const { createElement, insert, setElementText, patchProps } = options
 
     function mountElement(vnode, container) {
       const el = createElement(vnode.type)
@@ -15,10 +22,8 @@
       }
       if (vnode.props) {
         for (const key in vnode.props) {
-          // 调用setAttribute将属性设置到元素上
-          el.setAttribute(key, vnode.props[key])
-          //// 或者直接设置
-          // el[key] = vnode.props[key]
+          const value = vnode.props[key]
+          patchProps(el, key, null, value)
         }
       }
       insert(el, container)
@@ -46,6 +51,8 @@
       container._vnode = vnode
     }
 
+
+
     return { render }
   }
 
@@ -56,8 +63,19 @@
     },
     children: [
       {
-        type: 'p',
+        type: 'button',
+        props: {
+          id: 'btn'
+        },
         children: 'hello'
+      },
+      {
+        type: 'input',
+        props: {
+          type: 'text',
+          id: 'ipt',
+          form: 'form1'
+        },
       }
     ]
   }
@@ -71,6 +89,20 @@
     },
     insert(el, parent, anchor = null) {
       parent.insertBefore(el, anchor)
+    },
+    patchProps(el, key, preValue, nextValue) {
+      if (shouldSetAsProps(el, key, nextValue)) {
+        const type = typeof el[key]
+        if (type === "boolean" && nextValue === '') {
+          // 如果是布尔类型，并且value是空字符串，则将值矫正为true
+          el[key] = true
+        } else {
+          el[key] = nextValue
+        }
+      } else {
+        // 如果设置的属性没有对应的DOM Properties，或者为属性为form则使用 setAttribute 函数设置属性
+        el.setAttribute(key, nextValue)
+      }
     }
   })
 
