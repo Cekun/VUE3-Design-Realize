@@ -13,7 +13,8 @@
     const { createElement, insert, setElementText, patchProps } = options
 
     function mountElement(vnode, container) {
-      const el = createElement(vnode.type)
+      //   vnode 与真实DOM之间建立联系
+      const el = vnode.el = createElement(vnode.type)
       if (typeof vnode.children === "string")
         setElementText(el, vnode.children)
       else if (Array.isArray(vnode.children)) {
@@ -27,6 +28,12 @@
         }
       }
       insert(el, container)
+    }
+
+    function unmount(vnode) {
+      const parent = vnode.el.parentNode
+      if (parent)
+        parent.removeChild(vnode.el)
     }
 
     function patch(n1, n2, container) {
@@ -43,8 +50,9 @@
         patch(container._vnode, vnode, container)
       } else {
         if (container._vnode) {
-          // old vnode存在，且new vnode不存在，说明是写在（unmount）操作
-          container.innerHtml = ''
+          // old vnode存在，且new vnode不存在，说明是在（unmount）操作
+          // container.innerHtml = ''
+          unmount(container._vnode)
         }
       }
       // 把vnode 存储到container._vnode 下，即后续渲染中的old vnode
@@ -111,5 +119,9 @@
   })
 
   renderer.render(vnode, document.querySelector('#app'))
+
+  setTimeout(() => {
+    renderer.render(null, document.querySelector('#app'))
+  }, 0);
 
 </script>
