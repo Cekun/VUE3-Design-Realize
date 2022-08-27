@@ -59,7 +59,7 @@
         n1 = null
       }
       const { type } = n2
-      if (type === 'string') {
+      if (typeof type === 'string') {
         if (!n1) {
           mountElement(n2, container)
         } else {
@@ -96,26 +96,11 @@
   const vnode = {
     type: 'div',
     props: {
-      id: 'foo'
-    },
-    children: [
-      {
-        type: 'button',
-        props: {
-          id: 'btn',
-          class: 'btnCls'
-        },
-        children: 'hello'
-      },
-      {
-        type: 'input',
-        props: {
-          type: 'text',
-          id: 'ipt',
-          form: 'form1'
-        },
+      onClick: () => {
+        alert('clicked')
       }
-    ]
+    },
+    children: 'text'
   }
 
   const renderer = createRenderer({
@@ -129,7 +114,11 @@
       parent.insertBefore(el, anchor)
     },
     patchProps(el, key, preValue, nextValue) {
-      if (key === 'class') {
+      if (/^on/.test(key)) {
+        const name = key.slice(2).toLowerCase()
+        preValue && el.removeEventListener(name, preValue)
+        el.addEventListener(name, nextValue)
+      } else if (key === 'class') {
         // 对class进行特殊处理，className性能优于el.classList、el.setAttribute
         el.className = nextValue || ''
       } else if (shouldSetAsProps(el, key, nextValue)) {
@@ -149,8 +138,19 @@
 
   renderer.render(vnode, document.querySelector('#app'))
 
+  const newVnode = {
+    type: 'div',
+    props: {
+      onClick: () => {
+        console.log('1')
+      }
+    },
+    children: 'text'
+  }
+
   setTimeout(() => {
-    renderer.render(null, document.querySelector('#app'))
-  }, 0);
+
+    renderer.render(newVnode, document.querySelector('#app'))
+  }, 3000)
 
 </script>
