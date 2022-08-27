@@ -30,6 +30,23 @@
       insert(el, container)
     }
 
+    function patchElement(n1, n2) {
+      const el = n2.el = n1.el
+      const oldProps = n1.props
+      const newProps = n2.props
+
+      for (const key in newProps) {
+        if (newProps[key] !== oldProps[key]) {
+          patchProps(el, key, oldProps[key], newProps[key])
+        }
+      }
+      for (const key in oldProps) {
+        if (!(key in newProps)) {
+          patchProps(el, key, oldProps[key], null)
+        }
+      }
+    }
+
     function unmount(vnode) {
       const parent = vnode.el.parentNode
       if (parent)
@@ -37,11 +54,23 @@
     }
 
     function patch(n1, n2, container) {
-      if (!n1) {
-        mountElement(n2, container)
-      } else {
-
+      if (n1 && n1.type !== n2.type) {
+        unmount(n1)
+        n1 = null
       }
+      const { type } = n2
+      if (type === 'string') {
+        if (!n1) {
+          mountElement(n2, container)
+        } else {
+          patchElement(n1, n2)
+        }
+      } else if (typeof type === "object") {
+        // 如果n2.type 是object则它描述的是组件
+      } else if (type === 'xxx') {
+        // 处理其他类型的vnode
+      }
+
     }
 
     function render(vnode, container) {
