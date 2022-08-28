@@ -81,6 +81,10 @@
     }
 
     function unmount(vnode) {
+      if (vnode.type === Fragment) {
+        vnode.children.forEach(c => unmount(c))
+        return
+      }
       const parent = vnode.el.parentNode
       if (parent)
         parent.removeChild(vnode.el)
@@ -109,6 +113,12 @@
           if (n2.children !== n1.children) {
             setText(el, n2.children)
           }
+        }
+      } else if (type === Fragment) {
+        if (!n1) {
+          n2.children.forEach(c => patch(null, c, container))
+        } else {
+          patchChildren(n1, n2, container)
         }
       }
 
@@ -222,10 +232,29 @@
 
 
   const Text = Symbol()
-  const newVnode = {
-    type: Text,
-    children: 'Some Text'
-  }
+  // const newVnode = {
+  //   type: Text,
+  //   children: 'Some Text'
+  // }
   // renderer.render(newVnode, document.querySelector('#app'))
 
+
+
+  const Fragment = Symbol()
+  const newVnode = {
+    type: 'div',
+    children: [
+      {
+        type: Fragment,
+        children: [
+          { type: 'p', children: 'text 1' },
+          { type: 'p', children: 'text 2' },
+          { type: 'p', children: 'text 3' }
+        ]
+      },
+      { type: 'section', children: '分割线' }
+    ]
+  }
+  renderer.render(newVnode, document.querySelector('#app'))
+  renderer.render(null, document.querySelector('#app'))
 </script>
