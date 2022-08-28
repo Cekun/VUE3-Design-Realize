@@ -11,7 +11,7 @@
   }
 
   function createRenderer(options) {
-    const { createElement, insert, setElementText, patchProps } = options
+    const { createElement, insert, setElementText, patchProps, createText, setText } = options
 
     function mountElement(vnode, container) {
       //   vnode 与真实DOM之间建立联系
@@ -100,8 +100,16 @@
         }
       } else if (typeof type === "object") {
         // 如果n2.type 是object则它描述的是组件
-      } else if (type === 'xxx') {
-        // 处理其他类型的vnode
+      } else if (type === Text) {
+        if (!n1) {
+          const el = n2.el = createText(n2.children)
+          insert(el, container)
+        } else {
+          const el = n2.el = n1.el
+          if (n2.children !== n1.children) {
+            setText(el, n2.children)
+          }
+        }
       }
 
     }
@@ -133,6 +141,12 @@
     },
     insert(el, parent, anchor = null) {
       parent.insertBefore(el, anchor)
+    },
+    createText(text) {
+      return document.createTextNode(text)
+    },
+    setText(el, text) {
+      el.nodeValue = text
     },
     patchProps(el, key, preValue, nextValue) {
       if (/^on/.test(key)) {
@@ -205,5 +219,13 @@
     }
     renderer.render(vnode, document.querySelector('#app'))
   })
+
+
+  const Text = Symbol()
+  const newVnode = {
+    type: Text,
+    children: 'Some Text'
+  }
+  // renderer.render(newVnode, document.querySelector('#app'))
 
 </script>
