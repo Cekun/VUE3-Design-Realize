@@ -84,26 +84,42 @@
       let newEndVNode = newChildren[newEndIdx]
 
       while (oldStartIdx <= oldEndIdx && newStartIdx <= newEndIdx) {
-        if (oldStartVNode.key === newStartVNode.key) {
+        if (!oldStartVNode) {
+          oldStartVNode = oldChildren[++oldStartIdx]
+        } else if (!oldEndVNode) {
+          oldEndVNode = oldChildren[--oldEndIdx]
+        } else if (oldStartVNode.key === newStartVNode.key) {
           patch(oldStartVNode, newStartVNode, container)
-          oldStartVNode[++oldStartIdx]
-          newStartVNode[++newStartIdx]
+          oldStartVNode = oldChildren[++oldStartIdx]
+          newStartVNode = newChildren[++newStartIdx]
         } else if (oldEndVNode.key === newEndVNode.key) {
           patch(oldEndVNode, newEndVNode, container)
-          oldEndVNode[--oldEndIdx]
-          newEndVNode[--newEndIdx]
+          oldEndVNode = oldChildren[--oldEndIdx]
+          newEndVNode = newChildren[--newEndIdx]
         } else if (oldStartVNode.key === newEndVNode.key) {
           patch(oldStartVNode, newEndVNode, container)
           insert(oldStartVNode.el, container, oldEndVNode.el.nextSibling)
 
-          oldStartVNode[++oldStartIdx]
-          newEndVNode[--newEndVNode]
+          oldStartVNode = oldChildren[++oldStartIdx]
+          newEndVNode = newChildren[--newEndVNode]
         } else if (oldEndVNode.key === newStartVNode.key) {
           patch(oldEndVNode, newStartVNode, container)
           insert(oldEndVNode.el, container, oldStartVNode.el)
 
           oldEndVNode = oldChildren[--oldEndIdx]
           newStartVNode = newChildren[++newStartIdx]
+        } else {
+          // 遍历旧的一组子节点，试图寻找与newStartVNode拥有相同key值的节点
+          const idxInOld = oldChildren.findIndex(node => node.key === newStartVNode.key)
+
+          if (idxInOld > 0) {
+            const vnodeToMove = oldChildren[idxInOld]
+            patch(vnodeToMove, newStartVNode, container)
+
+            insert(vnodeToMove.el, container, oldStartVNode.el)
+            oldChildren[idxInOld] = undefined
+            newStartVNode = newChildren[++newStartIdx]
+          }
         }
       }
     }
