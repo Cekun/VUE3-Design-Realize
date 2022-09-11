@@ -12,7 +12,7 @@
   function createRenderer(options) {
     const { createElement, insert, setElementText, patchProps, createText, setText } = options
 
-    function mountElement(vnode, container) {
+    function mountElement(vnode, container, anchor) {
       //   vnode 与真实DOM之间建立联系
       const el = vnode.el = createElement(vnode.type)
       if (typeof vnode.children === "string")
@@ -27,7 +27,7 @@
           patchProps(el, key, null, value)
         }
       }
-      insert(el, container)
+      insert(el, container, anchor)
     }
 
     function patchElement(n1, n2) {
@@ -118,8 +118,18 @@
 
             insert(vnodeToMove.el, container, oldStartVNode.el)
             oldChildren[idxInOld] = undefined
-            newStartVNode = newChildren[++newStartIdx]
+          } else {
+            // 将newStartVnode 作为新节点挂载到头部，使用当前头部节点作为锚点
+            patch(null, newStartVNode, container, oldStartVNode.el)
           }
+          newStartVNode = newChildren[++newStartIdx]
+        }
+      }
+
+      if (oldEndIdx < oldStartIdx && newStartIdx < newEndIdx) {
+        // 添加新节点
+        for (let i = newStartIdx; i < newEndIdx; i++) {
+          patch(null, newChildren[i], container, oldStartVNode.el)
         }
       }
     }
@@ -134,7 +144,7 @@
         parent.removeChild(vnode.el)
     }
 
-    function patch(n1, n2, container) {
+    function patch(n1, n2, container, anchor) {
       if (n1 && n1.type !== n2.type) {
         unmount(n1)
         n1 = null
@@ -142,7 +152,7 @@
       const { type } = n2
       if (typeof type === 'string') {
         if (!n1) {
-          mountElement(n2, container)
+          mountElement(n2, container, anchor)
         } else {
           patchElement(n1, n2)
         }
