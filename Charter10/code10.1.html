@@ -49,7 +49,7 @@
     }
 
     function patchChildren(n1, n2, container) {
-      if (typeof n2 === "string") {
+      if (typeof n2.children === "string") {
         // 旧节点的类型有三种可能： 没有子节点、文本子节点、一组子节点
         // 只有当子节点为一组子节点时，才需要逐个卸载，其他情况什么都不需要做
         if (Array.isArray(n1.children)) {
@@ -133,7 +133,7 @@
         }
       } else if (newEndIdx < newStartIdx && oldStartIdx <= oldEndIdx) {
         // 移除操作
-        for (let i = oldStartIdx; i < oldEndIdx; i++) {
+        for (let i = oldStartIdx; i <= oldEndIdx; i++) {
           unmount(oldChildren[i])
         }
       }
@@ -269,5 +269,31 @@
   const Text = Symbol()
   const Fragment = Symbol()
 
+  const VNode1 = {
+    type: 'div',
+    children: [
+      { type: 'p', children: '1', key: 1 },
+      { type: 'p', children: '2', key: 2 },
+      { type: 'p', children: '3', key: 3 },
+      { type: 'p', children: '4', key: 4 },
+      { type: 'p', children: '555', key: 5 },
+    ]
+  }
+  renderer.render(VNode1, document.querySelector('#app'))
+
+  const VNode2 = {
+    type: 'div',
+    children: [
+      { type: 'p', children: '3', key: 3 },
+      { type: 'p', children: 'www', key: 5 },
+      { type: 'p', children: '1', key: 1 },
+      { type: 'p', children: '4', key: 4 },
+    ]
+  }
+
+  setTimeout(() => {
+    console.log('update')
+    renderer.render(VNode2, document.querySelector('#app'))
+  }, 400);
 
 </script>
